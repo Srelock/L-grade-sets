@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipment Upgrade — Armor Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a0806;
+            --bg-panel: #14110e;
+            --bg-panel-alt: #1c1712;
+            --bg-slot: #0f0d0a;
+            --border-bronze: #5c4a32;
+            --border-gold: #8b6914;
+            --border-gold-bright: #c9a227;
+            --text-cream: #e8dcc8;
+            --text-muted: #9a8b78;
+            --text-gold: #f0d78c;
+            --text-gold-dim: #b89a4a;
+            --accent-blue: #6eb5e8;
+            --accent-amber: #e8b84a;
+            --accent-red: #c45c4a;
+            --glow-gold: rgba(201, 162, 39, 0.35);
+            --font-display: 'Cinzel', Georgia, serif;
+            --font-body: 'Crimson Pro', Georgia, serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            font-size: 18px;
+            background-color: var(--bg-deep);
+            background-image:
+                radial-gradient(ellipse 80% 50% at 50% 0%, rgba(80, 55, 25, 0.18) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 40% at 50% 100%, rgba(20, 15, 10, 0.9) 0%, transparent 50%),
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            color: var(--text-cream);
+            min-height: 100vh;
+            padding: 24px 16px 48px;
+            line-height: 1.45;
+        }
+
+        .l2-window {
+            max-width: 1180px;
+            margin: 0 auto;
+            background: linear-gradient(180deg, #1a1612 0%, var(--bg-panel) 8%, var(--bg-panel) 100%);
+            border: 2px solid var(--border-bronze);
+            box-shadow:
+                0 0 0 1px #2a2218,
+                0 0 0 3px var(--border-gold),
+                0 0 0 4px #1a140c,
+                0 24px 64px rgba(0, 0, 0, 0.75),
+                inset 0 1px 0 rgba(255, 220, 150, 0.06);
+            position: relative;
+        }
+
+        .l2-window::before {
+            content: '';
+            position: absolute;
+            inset: 6px;
+            border: 1px solid rgba(139, 105, 20, 0.2);
+            pointer-events: none;
+        }
+
+        .title-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 24px;
+            background: linear-gradient(180deg, #2a2218 0%, #1e1914 50%, #16120e 100%);
+            border-bottom: 2px solid var(--border-gold);
+            box-shadow: inset 0 1px 0 rgba(255, 215, 120, 0.12);
+        }
+
+        .title-bar h1 {
+            font-family: var(--font-display);
+            font-size: clamp(1.1rem, 3vw, 1.45rem);
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-gold);
+            text-shadow: 0 1px 2px #000, 0 0 20px var(--glow-gold);
+        }
+
+        .window-body {
+            padding: 24px 20px 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-style: italic;
+            font-size: 0.95rem;
+            margin-bottom: 22px;
+        }
+
+        .armor-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 22px;
+            padding: 4px;
+            background: var(--bg-slot);
+            border: 1px solid var(--border-bronze);
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .armor-tab {
+            flex: 1;
+            min-width: 0;
+            padding: 12px 10px;
+            border: 1px solid transparent;
+            background: linear-gradient(180deg, #221c16 0%, #181410 100%);
+            color: var(--text-muted);
+            font-family: var(--font-display);
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .armor-tab:hover {
+            color: var(--text-cream);
+            border-color: var(--border-bronze);
+        }
+
+        .armor-tab.active {
+            color: var(--text-gold);
+            border-color: var(--border-gold-bright);
+            background: linear-gradient(180deg, #3d3020 0%, #2a2218 40%, #1e1810 100%);
+            box-shadow: inset 0 0 12px rgba(201, 162, 39, 0.15), 0 0 12px var(--glow-gold);
+        }
+
+        body[data-armor="light"] .armor-tab.active {
+            border-color: #6a9a6a;
+            box-shadow: inset 0 0 12px rgba(90, 140, 90, 0.2), 0 0 10px rgba(90, 140, 90, 0.15);
+            color: #b8d4b0;
+        }
+
+        body[data-armor="robe"] .armor-tab.active {
+            border-color: #8a6ab8;
+            box-shadow: inset 0 0 12px rgba(120, 80, 160, 0.25), 0 0 10px rgba(120, 80, 160, 0.2);
+            color: #d4c0f0;
+        }
+
+        .l2-panel {
+            background: var(--bg-panel-alt);
+            border: 1px solid var(--border-bronze);
+            margin-bottom: 22px;
+            box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .panel-header {
+            padding: 10px 16px;
+            background: linear-gradient(90deg, #2a2218 0%, #1e1814 50%, #2a2218 100%);
+            border-bottom: 1px solid var(--border-gold);
+            font-family: var(--font-display);
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-gold-dim);
+        }
+
+        .panel-body {
+            padding: 18px 16px;
+        }
+
+        .piece-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .piece-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            background: var(--bg-slot);
+            border: 1px solid var(--border-bronze);
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .piece-checkbox:hover {
+            border-color: var(--border-gold);
+            background: #16120e;
+        }
+
+        .piece-checkbox:has(input:checked) {
+            border-color: var(--border-gold-bright);
+            box-shadow: inset 0 0 0 1px rgba(201, 162, 39, 0.2);
+        }
+
+        .piece-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--border-gold-bright);
+            cursor: pointer;
+        }
+
+        .piece-checkbox label {
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-cream);
+            flex: 1;
+            font-size: 1rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .l2-btn {
+            flex: 1;
+            padding: 11px 16px;
+            border: 1px solid var(--border-gold);
+            background: linear-gradient(180deg, #3a3020 0%, #2a2218 50%, #1e1810 100%);
+            color: var(--text-gold);
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: filter 0.2s, box-shadow 0.2s;
+            box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.1);
+        }
+
+        .l2-btn:hover {
+            filter: brightness(1.12);
+            box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.15), 0 0 12px var(--glow-gold);
+        }
+
+        .l2-btn:active {
+            filter: brightness(0.95);
+        }
+
+        .l2-btn--danger {
+            border-color: #6a3a32;
+            background: linear-gradient(180deg, #3a2018 0%, #2a1814 50%, #1e100e 100%);
+            color: #e8a090;
+        }
+
+        .armor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+
+        .armor-piece {
+            background: var(--bg-slot);
+            border: 1px solid var(--border-bronze);
+            transition: opacity 0.3s, filter 0.3s;
+        }
+
+        .armor-piece:hover:not(.disabled) {
+            border-color: var(--border-gold);
+        }
+
+        .armor-piece.disabled {
+            opacity: 0.45;
+            filter: grayscale(0.6);
+        }
+
+        .armor-piece .piece-title {
+            padding: 12px 14px;
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-gold);
+            border-bottom: 1px solid var(--border-bronze);
+            background: linear-gradient(180deg, #221c16 0%, #181410 100%);
+        }
+
+        .armor-piece .materials-list {
+            padding: 8px 10px 10px;
+        }
+
+        .material-item {
+            display: grid;
+            grid-template-columns: 36px 1fr auto;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 6px;
+            border-bottom: 1px solid rgba(92, 74, 50, 0.35);
+        }
+
+        .material-item:last-child {
+            border-bottom: none;
+        }
+
+        .mat-icon {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border-bronze);
+            border-radius: 2px;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+        }
+
+        .mat-icon--crystal {
+            background: radial-gradient(circle at 35% 30%, #8ec8f0, #2a6090 45%, #0a2038);
+        }
+
+        .mat-icon--aether {
+            background: radial-gradient(circle at 40% 35%, #fff8a0, #e8a020 40%, #6a4010);
+        }
+
+        .mat-icon--solaris {
+            background: radial-gradient(circle at 45% 40%, #ffb060, #e84010 50%, #501008);
+        }
+
+        .mat-icon--jewel {
+            background: radial-gradient(circle at 40% 35%, #d8e8a0, #8a9850 45%, #3a4020);
+        }
+
+        .mat-icon--adena {
+            background: radial-gradient(circle at 40% 40%, #fff0a0, #d4a820 50%, #6a5010);
+        }
+
+        .material-name {
+            color: var(--text-cream);
+            font-size: 0.95rem;
+        }
+
+        .material-amount {
+            font-weight: 600;
+            color: var(--accent-blue);
+            font-size: 1.05rem;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .material-item[data-mat="Adena"] .material-amount {
+            color: var(--accent-amber);
+        }
+
+        .total-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 12px;
+        }
+
+        .total-item {
+            background: var(--bg-slot);
+            border: 1px solid var(--border-bronze);
+            padding: 14px;
+            text-align: center;
+        }
+
+        .total-item-name {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .total-item-amount {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+
+        .total-item[data-mat="Adena"] .total-item-amount {
+            color: var(--accent-amber);
+        }
+
+        .cost-note {
+            text-align: center;
+            color: var(--text-muted);
+            font-style: italic;
+            font-size: 0.92rem;
+            margin-bottom: 18px;
+        }
+
+        .price-config {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .price-item label {
+            display: block;
+            font-size: 0.88rem;
+            color: var(--text-gold-dim);
+            margin-bottom: 6px;
+            letter-spacing: 0.03em;
+        }
+
+        .price-item input {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-slot);
+            border: 1px solid var(--border-bronze);
+            color: var(--accent-blue);
+            font-family: var(--font-body);
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .price-item input:focus {
+            outline: none;
+            border-color: var(--border-gold-bright);
+            box-shadow: 0 0 0 2px var(--glow-gold);
+        }
+
+        .cost-totals {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 14px;
+        }
+
+        .cost-section {
+            background: var(--bg-slot);
+            border: 1px solid var(--border-bronze);
+        }
+
+        .cost-section h3 {
+            padding: 10px 14px;
+            font-family: var(--font-display);
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-gold-dim);
+            border-bottom: 1px solid var(--border-bronze);
+            text-align: center;
+        }
+
+        .cost-breakdown {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .cost-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 10px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(92, 74, 50, 0.3);
+            font-size: 1rem;
+        }
+
+        .cost-line span:last-child {
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        .cost-line.total-line {
+            border-color: var(--border-gold);
+            background: rgba(201, 162, 39, 0.08);
+            margin-top: 4px;
+        }
+
+        .cost-line.total-line span {
+            color: var(--accent-amber);
+            font-weight: 600;
+        }
+
+        .window-footer {
+            text-align: center;
+            padding: 12px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-bronze);
+            letter-spacing: 0.08em;
+        }
+
+        @media (max-width: 600px) {
+            .armor-tab {
+                font-size: 0.62rem;
+                padding: 10px 6px;
+            }
+
+            body {
+                font-size: 16px;
+                padding: 12px 8px 32px;
+            }
+
+            .window-body {
+                padding: 16px 12px 20px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body data-armor="heavy">
+    <main class="l2-window">
+        <header class="title-bar">
+            <h1>Equipment Upgrade</h1>
+        </header>
+
+        <div class="window-body">
+            <p class="subtitle">Armor crafting materials calculator — select your set and pieces</p>
+
+            <div class="armor-tabs" role="tablist" aria-label="Armor type">
+                <button type="button" class="armor-tab active" data-type="heavy" role="tab" aria-selected="true">Heavy Armor</button>
+                <button type="button" class="armor-tab" data-type="light" role="tab" aria-selected="false">Light Armor</button>
+                <button type="button" class="armor-tab" data-type="robe" role="tab" aria-selected="false">Robe Armor</button>
+            </div>
+
+            <section class="l2-panel" aria-labelledby="select-heading">
+                <div class="panel-header" id="select-heading">Select Pieces</div>
+                <div class="panel-body">
+                    <div class="piece-selector" id="piece-selector"></div>
+                    <div class="button-group">
+                        <button type="button" class="l2-btn" onclick="selectAll()">Select All</button>
+                        <button type="button" class="l2-btn l2-btn--danger" onclick="deselectAll()">Clear All</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="l2-panel" aria-labelledby="required-heading">
+                <div class="panel-header" id="required-heading">Required Materials</div>
+                <div class="panel-body" style="padding-top: 14px;">
+                    <div class="armor-grid" id="armor-grid"></div>
+                </div>
+            </section>
+
+            <section class="l2-panel" aria-labelledby="totals-heading">
+                <div class="panel-header" id="totals-heading">Total Required</div>
+                <div class="panel-body">
+                    <div class="total-grid" id="totals-grid"></div>
+                </div>
+            </section>
+
+            <section class="l2-panel" aria-labelledby="cost-heading">
+                <div class="panel-header" id="cost-heading">Market Cost</div>
+                <div class="panel-body">
+                    <p class="cost-note">Estimate adena and conquest points to purchase Aether and Solaris</p>
+                    <div class="price-config">
+                        <div class="price-item">
+                            <label for="aether-adena">Aether — Adena each</label>
+                            <input type="text" id="aether-adena" value="700,000" inputmode="numeric" oninput="formatPriceInput(this)" onchange="updateCosts()">
+                        </div>
+                        <div class="price-item">
+                            <label for="aether-conquest">Aether — Conquest each</label>
+                            <input type="text" id="aether-conquest" value="7" inputmode="numeric" oninput="formatPriceInput(this)" onchange="updateCosts()">
+                        </div>
+                        <div class="price-item">
+                            <label for="solaris-adena">Solaris — Adena each</label>
+                            <input type="text" id="solaris-adena" value="20,000,000" inputmode="numeric" oninput="formatPriceInput(this)" onchange="updateCosts()">
+                        </div>
+                        <div class="price-item">
+                            <label for="solaris-conquest">Solaris — Conquest each</label>
+                            <input type="text" id="solaris-conquest" value="200" inputmode="numeric" oninput="formatPriceInput(this)" onchange="updateCosts()">
+                        </div>
+                    </div>
+                    <div class="cost-totals">
+                        <div class="cost-section">
+                            <h3>Adena Cost</h3>
+                            <div class="cost-breakdown">
+                                <div class="cost-line">
+                                    <span>Aether</span>
+                                    <span id="aether-adena-cost">0</span>
+                                </div>
+                                <div class="cost-line">
+                                    <span>Solaris</span>
+                                    <span id="solaris-adena-cost">0</span>
+                                </div>
+                                <div class="cost-line total-line">
+                                    <span>Total Adena</span>
+                                    <span id="total-adena-cost">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="cost-section">
+                            <h3>Conquest Points</h3>
+                            <div class="cost-breakdown">
+                                <div class="cost-line">
+                                    <span>Aether</span>
+                                    <span id="aether-conquest-cost">0</span>
+                                </div>
+                                <div class="cost-line">
+                                    <span>Solaris</span>
+                                    <span id="solaris-conquest-cost">0</span>
+                                </div>
+                                <div class="cost-line total-line">
+                                    <span>Total Conquest</span>
+                                    <span id="total-conquest-cost">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer class="window-footer">Lineage II — Armor Upgrade Calculator</footer>
+    </main>
+
+    <script>
+        const PIECE_ORDER = ['helmet', 'chest', 'gaiters', 'gloves', 'boots'];
+
+        const MATERIAL_ICONS = {
+            'Crystal of Protection': 'crystal',
+            'Aether': 'aether',
+            'Solaris': 'solaris',
+            'Jewel': 'jewel',
+            'Adena': 'adena'
+        };
+
+        const SLOT_MATERIALS = {
+            helmet: {
+                "Crystal of Protection": 3710,
+                "Aether": 76500,
+                "Solaris": 520,
+                "Jewel": 2080,
+                "Adena": 1511640000
+            },
+            chest: {
+                "Crystal of Protection": 9892,
+                "Aether": 204000,
+                "Solaris": 1387,
+                "Jewel": 5548,
+                "Adena": 4032009000
+            },
+            gaiters: {
+                "Crystal of Protection": 6183,
+                "Aether": 127500,
+                "Solaris": 867,
+                "Jewel": 3468,
+                "Adena": 2520369000
+            },
+            gloves: {
+                "Crystal of Protection": 2473,
+                "Aether": 51000,
+                "Solaris": 348,
+                "Jewel": 1392,
+                "Adena": 1011636000
+            },
+            boots: {
+                "Crystal of Protection": 2473,
+                "Aether": 51000,
+                "Solaris": 348,
+                "Jewel": 1392,
+                "Adena": 1011636000
+            }
+        };
+
+        const ARMOR_TYPES = {
+            heavy: {
+                label: 'Heavy Armor',
+                pieces: {
+                    helmet: 'Helmet',
+                    chest: 'Breastplate',
+                    gaiters: 'Gaiters',
+                    gloves: 'Gauntlets',
+                    boots: 'Boots'
+                }
+            },
+            light: {
+                label: 'Light Armor',
+                pieces: {
+                    helmet: 'Leather Helmet',
+                    chest: 'Leather Armor',
+                    gaiters: 'Leather Leggings',
+                    gloves: 'Leather Gloves',
+                    boots: 'Leather Boots'
+                }
+            },
+            robe: {
+                label: 'Robe Armor',
+                pieces: {
+                    helmet: 'Circlet',
+                    chest: 'Tunic',
+                    gaiters: 'Stockings',
+                    gloves: 'Gloves',
+                    boots: 'Shoes'
+                },
+                materials: {
+                    helmet: {
+                        "Crystal of Protection": 3710,
+                        "Aether": 76500,
+                        "Solaris": 520,
+                        "Jewel": 2080,
+                        "Adena": 1510000000
+                    }
+                }
+            }
+        };
+
+        let currentArmorType = 'heavy';
+
+        function getMaterialsForType(type) {
+            const overrides = ARMOR_TYPES[type].materials || {};
+            const materials = {};
+            for (const piece of PIECE_ORDER) {
+                materials[piece] = { ...(overrides[piece] || SLOT_MATERIALS[piece]) };
+            }
+            return materials;
+        }
+
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        function formatLargeNumber(num) {
+            if (num >= 1000000000) {
+                const billions = num / 1000000000;
+                const formatted = billions >= 10
+                    ? billions.toFixed(1)
+                    : billions.toFixed(2).replace(/0$/, '');
+                return formatted + 'B';
+            }
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            }
+            return formatNumber(num);
+        }
+
+        function formatMaterialAmount(material, amount) {
+            return material === 'Adena' ? formatLargeNumber(amount) : formatNumber(amount);
+        }
+
+        function materialRowHtml(name, amount) {
+            const iconClass = MATERIAL_ICONS[name] || 'jewel';
+            return `
+                <div class="material-item" data-mat="${name}">
+                    <div class="mat-icon mat-icon--${iconClass}" aria-hidden="true"></div>
+                    <span class="material-name">${name}</span>
+                    <span class="material-amount">×${formatMaterialAmount(name, amount)}</span>
+                </div>
+            `;
+        }
+
+        function renderPieceSelector() {
+            const selector = document.getElementById('piece-selector');
+            const typeConfig = ARMOR_TYPES[currentArmorType];
+            selector.innerHTML = PIECE_ORDER.map(piece => {
+                const checkbox = document.getElementById(`cb-${piece}`);
+                const checked = checkbox ? checkbox.checked : true;
+                return `
+                    <div class="piece-checkbox">
+                        <input type="checkbox" id="cb-${piece}" ${checked ? 'checked' : ''} onchange="updateTotals()">
+                        <label for="cb-${piece}">${typeConfig.pieces[piece]}</label>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderArmorGrid() {
+            const grid = document.getElementById('armor-grid');
+            const materials = getMaterialsForType(currentArmorType);
+            const typeConfig = ARMOR_TYPES[currentArmorType];
+
+            grid.innerHTML = PIECE_ORDER.map(piece => {
+                const pieceMaterials = materials[piece];
+                const rows = Object.entries(pieceMaterials)
+                    .map(([name, amount]) => materialRowHtml(name, amount))
+                    .join('');
+
+                return `
+                    <article class="armor-piece" id="piece-${piece}">
+                        <h3 class="piece-title">${typeConfig.pieces[piece]}</h3>
+                        <div class="materials-list">${rows}</div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function switchArmorType(type) {
+            if (!ARMOR_TYPES[type]) return;
+            currentArmorType = type;
+            document.body.dataset.armor = type;
+
+            document.querySelectorAll('.armor-tab').forEach(tab => {
+                const isActive = tab.dataset.type === type;
+                tab.classList.toggle('active', isActive);
+                tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
+
+            renderPieceSelector();
+            renderArmorGrid();
+            updateTotals();
+        }
+
+        function updateTotals() {
+            const materials = getMaterialsForType(currentArmorType);
+            const totals = {};
+
+            for (const piece of PIECE_ORDER) {
+                const checkbox = document.getElementById(`cb-${piece}`);
+                const pieceElement = document.getElementById(`piece-${piece}`);
+
+                if (!checkbox || !pieceElement) continue;
+
+                if (checkbox.checked) {
+                    pieceElement.classList.remove('disabled');
+                    for (const [material, amount] of Object.entries(materials[piece])) {
+                        totals[material] = (totals[material] || 0) + amount;
+                    }
+                } else {
+                    pieceElement.classList.add('disabled');
+                }
+            }
+
+            const totalsGrid = document.getElementById('totals-grid');
+            totalsGrid.innerHTML = '';
+
+            for (const [material, amount] of Object.entries(totals)) {
+                const totalItem = document.createElement('div');
+                totalItem.className = 'total-item';
+                totalItem.dataset.mat = material;
+                const displayValue = material === 'Adena'
+                    ? formatLargeNumber(amount)
+                    : formatNumber(amount);
+                totalItem.innerHTML = `
+                    <div class="total-item-name">${material}</div>
+                    <div class="total-item-amount">×${displayValue}</div>
+                `;
+                totalsGrid.appendChild(totalItem);
+            }
+        }
+
+        function selectAll() {
+            document.querySelectorAll('#piece-selector input[type="checkbox"]').forEach(cb => {
+                cb.checked = true;
+            });
+            updateTotals();
+        }
+
+        function deselectAll() {
+            document.querySelectorAll('#piece-selector input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+            updateTotals();
+        }
+
+        function parseFormattedNumber(value) {
+            return parseFloat(value.replace(/,/g, '')) || 0;
+        }
+
+        function formatPriceInput(input) {
+            const cursorPosition = input.selectionStart;
+            const oldValue = input.value;
+            const numericValue = oldValue.replace(/[^\d]/g, '');
+
+            if (numericValue) {
+                const formatted = parseInt(numericValue, 10).toLocaleString();
+                input.value = formatted;
+
+                const commasBefore = (oldValue.substring(0, cursorPosition).match(/,/g) || []).length;
+                const commasAfter = (formatted.substring(0, cursorPosition).match(/,/g) || []).length;
+                const newPosition = cursorPosition + (commasAfter - commasBefore);
+                input.setSelectionRange(newPosition, newPosition);
+            }
+
+            updateCosts();
+        }
+
+        function updateCosts() {
+            const materials = getMaterialsForType(currentArmorType);
+            const totals = {};
+
+            for (const piece of PIECE_ORDER) {
+                const checkbox = document.getElementById(`cb-${piece}`);
+                if (checkbox && checkbox.checked) {
+                    for (const [material, amount] of Object.entries(materials[piece])) {
+                        totals[material] = (totals[material] || 0) + amount;
+                    }
+                }
+            }
+
+            const aetherAdenaPrice = parseFormattedNumber(document.getElementById('aether-adena').value);
+            const aetherConquestPrice = parseFormattedNumber(document.getElementById('aether-conquest').value);
+            const solarisAdenaPrice = parseFormattedNumber(document.getElementById('solaris-adena').value);
+            const solarisConquestPrice = parseFormattedNumber(document.getElementById('solaris-conquest').value);
+
+            const aetherCount = totals.Aether || 0;
+            const solarisCount = totals.Solaris || 0;
+
+            const aetherAdenaCost = aetherCount * aetherAdenaPrice;
+            const aetherConquestCost = aetherCount * aetherConquestPrice;
+            const solarisAdenaCost = solarisCount * solarisAdenaPrice;
+            const solarisConquestCost = solarisCount * solarisConquestPrice;
+
+            document.getElementById('aether-adena-cost').textContent = formatNumber(Math.round(aetherAdenaCost));
+            document.getElementById('solaris-adena-cost').textContent = formatNumber(Math.round(solarisAdenaCost));
+            document.getElementById('total-adena-cost').textContent = formatNumber(Math.round(aetherAdenaCost + solarisAdenaCost));
+
+            document.getElementById('aether-conquest-cost').textContent = formatNumber(Math.round(aetherConquestCost));
+            document.getElementById('solaris-conquest-cost').textContent = formatNumber(Math.round(solarisConquestCost));
+            document.getElementById('total-conquest-cost').textContent = formatNumber(Math.round(aetherConquestCost + solarisConquestCost));
+        }
+
+        const originalUpdateTotals = updateTotals;
+        updateTotals = function() {
+            originalUpdateTotals();
+            updateCosts();
+        };
+
+        document.querySelectorAll('.armor-tab').forEach(tab => {
+            tab.addEventListener('click', () => switchArmorType(tab.dataset.type));
+        });
+
+        renderPieceSelector();
+        renderArmorGrid();
+        updateTotals();
+    </script>
+</body>
+</html>
