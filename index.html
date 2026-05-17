@@ -479,11 +479,21 @@
 
         .window-footer {
             text-align: center;
-            padding: 12px;
+            padding: 12px 16px;
             font-size: 0.8rem;
             color: var(--text-muted);
             border-top: 1px solid var(--border-bronze);
             letter-spacing: 0.08em;
+            line-height: 1.6;
+        }
+
+        .window-footer .designer {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.75rem;
+            color: var(--text-gold-dim);
+            font-style: italic;
+            letter-spacing: 0.06em;
         }
 
         @media (max-width: 600px) {
@@ -612,7 +622,10 @@
             </section>
         </div>
 
-        <footer class="window-footer">Lineage II — Armor Upgrade Calculator</footer>
+        <footer class="window-footer">
+            Lineage II — Armor Upgrade Calculator
+            <span class="designer">Designed by Vuti</span>
+        </footer>
     </main>
 
     <script>
